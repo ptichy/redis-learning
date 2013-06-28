@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
         if ( cmdLine[strlen(cmdLine)-1] == '\n' )  cmdLine[strlen(cmdLine)-1] = '\0';
 
         size = strchr(cmdLine,' ')-cmdLine;
-        cmd = (char*)malloc((size+1)*sizeof(char));
+        if ( strchr(cmdLine,' ') > 0 ) cmd = (char*)malloc((size+1)*sizeof(char));        
 
         for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
         cmd[i] = '\0';
