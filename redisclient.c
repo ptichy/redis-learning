@@ -68,85 +68,83 @@ int main(int argc, char *argv[]) {
 
     while( strcmp(cmdLine, "exit") != 0 )
     {
-    printf("redis: ");
+        printf("redis: ");
 
-    fgets(cmdLine, 50, stdin);
+        fgets(cmdLine, 50, stdin);
 
-    if ( cmdLine[strlen(cmdLine)-1] == '\n' )  cmdLine[strlen(cmdLine)-1] = '\0';
+        if ( cmdLine[strlen(cmdLine)-1] == '\n' )  cmdLine[strlen(cmdLine)-1] = '\0';
 
-    size = strchr(cmdLine,' ')-cmdLine;
-    cmd = (char*)malloc((size+1)*sizeof(char));
+        size = strchr(cmdLine,' ')-cmdLine;
+        cmd = (char*)malloc((size+1)*sizeof(char));
 
-    for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
-    cmd[i] = '\0';
+        for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
+        cmd[i] = '\0';
 
-    for ( i = 0; i < size; i++ ) cmd[i] = tolower(cmd[i]);
-    if ( strcmp(cmd,"get") == 0 )   // get variable
-    {
-        reply = redisCommand(c,cmdLine);
-        printf("> %s\n", reply->str);
-        freeReplyObject(reply);
-    }
-
-    if ( strcmp(cmd,"set") == 0 )  // set the key
-    {
-        size = strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine-strlen(cmd);
-        key = (char*)malloc(size*sizeof(char));
-        for ( i = strlen(cmd)+1; i < strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine; i++ ) key[i-(strlen(cmd)+1)] = cmdLine[i];
-        key[i-(strlen(cmd)+1)] = '\0';
-        printf("key:%s|",key);
-
-        temp = i+1;
-        size = strlen(cmdLine)-(strlen(cmd)+strlen(key)+1);
-
-        printf("sizeofvalue=%d-strlencmdline:%d + strlcmd:%d +strlenkey:%d\n",size, strlen(cmdLine), strlen(cmd), strlen(key));
-        value = (char*)malloc(size*sizeof(char));
-
-        for ( i; i < strlen(cmdLine); i++ ) value[i-temp] = cmdLine[i];
-        value[i-temp] = '\0';
-        printf("value:%s|\n", value);
-
-        printf("key:%s|\n", key);
-        reply = redisCommand(c,"SET %s %s", key, value);
-        printf("SET: %s\n", reply->str);
-        freeReplyObject(reply);
-    }
-
-    if ( strcmp(cmd,"incr") == 0 )  // increment the number
-    {
-        i = 0;
-        counter = 0;
-        while ( counter < 2 && i < strlen(cmdLine) )
+        for ( i = 0; i < size; i++ ) cmd[i] = tolower(cmd[i]);
+        if ( strcmp(cmd,"get") == 0 )   // get variable
         {
-            if ( cmdLine[i] == ' ' ) counter++;
-            i++;
+            reply = redisCommand(c,cmdLine);
+            printf("> %s\n", reply->str);
+            freeReplyObject(reply);
         }
-        if ( counter == 2 ) cmdLine[i] = '\0';
 
-        reply = redisCommand(c,cmdLine);
-        printf("%s: %lld\n", cmdLine, reply->integer);
-        freeReplyObject(reply);
-    }
-
-    if ( strcmp(cmd,"decr") == 0 )  // decrement the number
-    {
-        i = 0;
-        counter = 0;
-       // printf("command:%s|\n",cmdLine);
-        while ( counter < 2 && i < strlen(cmdLine) )
+        if ( strcmp(cmd,"set") == 0 )  // set the key
         {
-            if ( cmdLine[i] == ' ' ) counter++;
-            i++;
+            size = strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine-strlen(cmd);
+            key = (char*)malloc(size*sizeof(char));
+            for ( i = strlen(cmd)+1; i < strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine; i++ ) key[i-(strlen(cmd)+1)] = cmdLine[i];
+            key[i-(strlen(cmd)+1)] = '\0';
+            //printf("key:%s|",key);
+
+            temp = i+1;
+            size = strlen(cmdLine)-(strlen(cmd)+strlen(key)+1);
+
+            //printf("sizeofvalue=%d-strlencmdline:%d + strlcmd:%d +strlenkey:%d\n",size, strlen(cmdLine), strlen(cmd), strlen(key));
+            value = (char*)malloc(size*sizeof(char));
+
+            for ( i; i < strlen(cmdLine); i++ ) value[i-temp] = cmdLine[i];
+            value[i-temp] = '\0';
+            //printf("value:%s|\n", value);
+
+            //printf("key:%s|\n", key);
+            reply = redisCommand(c,"SET %s %s", key, value);
+            printf("SET: %s\n", reply->str);
+            freeReplyObject(reply);
         }
-        //printf("counter:%d, cmdind:%d\n",counter,i);
-        if ( counter == 2 ) cmdLine[i] = '\0';
-//printf("\ncommand:%s|\n",cmdLine);
-        reply = redisCommand(c,cmdLine);
-        printf("%s: %lld\n", cmdLine, reply->integer);
-        freeReplyObject(reply);
-    }
 
+        if ( strcmp(cmd,"incr") == 0 )  // increment the number
+        {
+            i = 0;
+            counter = 0;
+            while ( counter < 2 && i < strlen(cmdLine) )
+            {
+                if ( cmdLine[i] == ' ' ) counter++;
+                i++;
+            }
+            if ( counter == 2 ) cmdLine[i] = '\0';
 
+            reply = redisCommand(c,cmdLine);
+            printf(">%s: %lld\n", cmdLine, reply->integer);
+            freeReplyObject(reply);
+        }
+
+        if ( strcmp(cmd,"decr") == 0 )  // decrement the number
+        {
+            i = 0;
+            counter = 0;
+            // printf("command:%s|\n",cmdLine);
+            while ( counter < 2 && i < strlen(cmdLine) )
+            {
+                if ( cmdLine[i] == ' ' ) counter++;
+                i++;
+            }
+            //printf("counter:%d, cmdind:%d\n",counter,i);
+            if ( counter == 2 ) cmdLine[i] = '\0';
+            //printf("\ncommand:%s|\n",cmdLine);
+            reply = redisCommand(c,cmdLine);
+            printf(">%s: %lld\n", cmdLine, reply->integer);
+            freeReplyObject(reply);
+        }
 
     } // end of while
 
