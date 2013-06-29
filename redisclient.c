@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <malloc.h>
 
 
 #include "hiredis/hiredis.h"
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]) {
         if ( cmdLine[strlen(cmdLine)-1] == '\n' )  cmdLine[strlen(cmdLine)-1] = '\0';
 
         size = strchr(cmdLine,' ')-cmdLine;
-        if ( strchr(cmdLine,' ') > 0 ) cmd = (char*)malloc((size+1)*sizeof(char));        
+        if ( strchr(cmdLine,' ') > 0 ) cmd = (char*)malloc((size+1)*sizeof(char));
 
         for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
         cmd[i] = '\0';
@@ -86,6 +87,8 @@ int main(int argc, char *argv[]) {
             reply = redisCommand(c,cmdLine);
             printf("> %s\n", reply->str);
             freeReplyObject(reply);
+
+            free(cmd);
         }
 
         if ( strcmp(cmd,"set") == 0 )  // set the key
@@ -101,15 +104,20 @@ int main(int argc, char *argv[]) {
 
             //printf("sizeofvalue=%d-strlencmdline:%d + strlcmd:%d +strlenkey:%d\n",size, strlen(cmdLine), strlen(cmd), strlen(key));
             value = (char*)malloc(size*sizeof(char));
-
+            //printf("value_size:%d|\n", size);
             for ( i; i < strlen(cmdLine); i++ ) value[i-temp] = cmdLine[i];
             value[i-temp] = '\0';
+
             //printf("value:%s|\n", value);
 
             //printf("key:%s|\n", key);
             reply = redisCommand(c,"SET %s %s", key, value);
             printf("SET: %s\n", reply->str);
             freeReplyObject(reply);
+
+            free(key);
+            //free(value);
+            free(cmd);
         }
 
         if ( strcmp(cmd,"incr") == 0 )  // increment the number
@@ -126,6 +134,8 @@ int main(int argc, char *argv[]) {
             reply = redisCommand(c,cmdLine);
             printf(">%s: %lld\n", cmdLine, reply->integer);
             freeReplyObject(reply);
+
+            free(cmd);
         }
 
         if ( strcmp(cmd,"decr") == 0 )  // decrement the number
@@ -144,9 +154,13 @@ int main(int argc, char *argv[]) {
             reply = redisCommand(c,cmdLine);
             printf(">%s: %lld\n", cmdLine, reply->integer);
             freeReplyObject(reply);
+
+            free(cmd);
         }
 
     } // end of while
 
+    free(ip);
+    free(cmdLine);
     return 0;
 }
