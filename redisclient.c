@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
         cmd[i] = '\0';
 
         for ( i = 0; i < size; i++ ) cmd[i] = tolower(cmd[i]);
-        if ( strcmp(cmd,"get") == 0 )   // get variable
+        if ( strcmp(cmd,"get") == 0 )   // get the key
         {
             reply = redisCommand(c,cmdLine);
             printf("> %s\n", reply->str);
@@ -153,6 +153,15 @@ int main(int argc, char *argv[]) {
             //printf("\ncommand:%s|\n",cmdLine);
             reply = redisCommand(c,cmdLine);
             printf(">%s: %lld\n", cmdLine, reply->integer);
+            freeReplyObject(reply);
+
+            free(cmd);
+        }
+
+        if ( strcmp(cmd,"del") == 0 )   // delete a key
+        {
+            reply = redisCommand(c,cmdLine);
+            printf("> %s\n", reply->str);
             freeReplyObject(reply);
 
             free(cmd);
