@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     freeReplyObject(reply);
 
 
-    cmdLine = (char*)malloc(50);
+    cmdLine =  (char*)malloc(50*sizeof(char));
 
     while( strcmp(cmdLine, "exit") != 0 )
     {
