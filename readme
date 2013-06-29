@@ -4,3 +4,10 @@ If you want to specify the host from terminal, run ./redisclient 127.0.0.1:6379.
 If you don't define, it will use the adress and port in this example.
 Type exit to quit.
 Supported commands: get, set, del, incr, decr.
+  get key
+  set key value
+  set age 21
+  incr age
+  decr age
+  del age
+  
