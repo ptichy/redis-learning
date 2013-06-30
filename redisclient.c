@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
         if ( counter != 4 )
         {
-            printf("error: wrong format (use 127.0.0.1:6379)");
+            printf("error: wrong format (use 127.0.0.1:6379)\n");
             exit(1);
         }
 
@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
     printf("PING: %s\n", reply->str);
     freeReplyObject(reply);
 
-
     cmdLine =  (char*)malloc(50*sizeof(char));
 
     while( strcmp(cmdLine, "exit") != 0 )
@@ -75,13 +74,20 @@ int main(int argc, char *argv[]) {
 
         if ( cmdLine[strlen(cmdLine)-1] == '\n' )  cmdLine[strlen(cmdLine)-1] = '\0';
 
-        size = strchr(cmdLine,' ')-cmdLine;
-        if ( strchr(cmdLine,' ') > 0 ) cmd = (char*)malloc((size+1)*sizeof(char));
+        if ( strchr(cmdLine,' ') > 0 )
+        {
+            size = strchr(cmdLine,' ')-cmdLine;
+            cmd = (char*)malloc((size+1)*sizeof(char));
+            for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
+            cmd[i] = '\0';
+            for ( i = 0; i < size; i++ ) cmd[i] = tolower(cmd[i]);
+        }
+        else
+        {
+            cmd = (char*)malloc((strlen(cmdLine)+1)*sizeof(char));
+            strcpy(cmd,cmdLine);
+        }
 
-        for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
-        cmd[i] = '\0';
-
-        for ( i = 0; i < size; i++ ) cmd[i] = tolower(cmd[i]);
         if ( strcmp(cmd,"get") == 0 )   // get the key
         {
             reply = redisCommand(c,cmdLine);
