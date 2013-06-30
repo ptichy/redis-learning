@@ -118,11 +118,11 @@ int main(int argc, char *argv[]) {
 
             //printf("key:%s|\n", key);
             reply = redisCommand(c,"SET %s %s", key, value);
-            printf("SET: %s\n", reply->str);
+            printf("> SET: %s\n", reply->str);
             freeReplyObject(reply);
 
             free(key);
-            //free(value);
+           // free(value);
             free(cmd);
         }
 
@@ -138,7 +138,14 @@ int main(int argc, char *argv[]) {
             if ( counter == 2 ) cmdLine[i] = '\0';
 
             reply = redisCommand(c,cmdLine);
-            printf(">%s: %lld\n", cmdLine, reply->integer);
+            if ( (reply->str) == NULL )
+            {
+                printf("> %lld\n", reply->integer);
+            }
+            else
+            {
+                printf("> %s\n", reply->str);
+            }
             freeReplyObject(reply);
 
             free(cmd);
@@ -158,7 +165,14 @@ int main(int argc, char *argv[]) {
             if ( counter == 2 ) cmdLine[i] = '\0';
             //printf("\ncommand:%s|\n",cmdLine);
             reply = redisCommand(c,cmdLine);
-            printf(">%s: %lld\n", cmdLine, reply->integer);
+            if ( (reply->str) == NULL )
+            {
+                printf("> %lld\n", reply->integer);
+            }
+            else
+            {
+                printf("> %s\n", reply->str);
+            }
             freeReplyObject(reply);
 
             free(cmd);
