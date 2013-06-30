@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include <malloc.h>
 
-
 #include "hiredis/hiredis.h"
 
 int main(int argc, char *argv[]) {
@@ -20,7 +19,7 @@ int main(int argc, char *argv[]) {
     redisReply *reply;
     struct timeval timeout = { 1, 500000 };
 
-    if ( argc != 2 )
+    if ( argv[1] == NULL )
     {
         port = 6379;
         ip = "127.0.0.1";
@@ -189,7 +188,7 @@ int main(int argc, char *argv[]) {
 
     } // end of while
 
-    free(ip);
+    if ( argv[1] != NULL ) free(ip);
     free(cmdLine);
     return 0;
 }
