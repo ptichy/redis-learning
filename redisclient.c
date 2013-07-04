@@ -31,6 +31,7 @@ void ping(redisContext *c)
 void get(redisContext *c, char *cmdLine)
 {
     redisReply *reply;
+
     reply = redisCommand(c,cmdLine);
     printf("> %s\n", reply->str);
     freeReplyObject(reply);
@@ -40,7 +41,7 @@ void set(redisContext *c, char *cmdLine, char *cmd)
 {
     redisReply *reply;
     char *key, *value;
-    int i, size;
+    int size;
 
     size = strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine-strlen(cmd)-1;
 
