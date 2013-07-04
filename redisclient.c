@@ -36,11 +36,11 @@ void get(redisContext *c, char *cmdLine)
     freeReplyObject(reply);
 }
 
-void set(redisContext *c, char *cmdLine, char *cmd, int size)
+void set(redisContext *c, char *cmdLine, char *cmd)
 {
     redisReply *reply;
     char *key, *value;
-    int i, pos;
+    int i, size;
 
     size = strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine-strlen(cmd)-1;
 
@@ -72,16 +72,18 @@ void step(redisContext *c, char *cmdLine)
 
     i = 0;
     counter = 0;
+
     while ( counter < 2 && i < strlen(cmdLine) )
     {
         if ( cmdLine[i] == ' ' ) counter++;
         i++;
     }
+
     if ( counter == 2 ) cmdLine[i] = '\0';
 
     reply = redisCommand(c,cmdLine);
-    if ( (reply->str) == NULL )
 
+    if ( (reply->str) == NULL )
     {
         printf("> %lld\n", reply->integer);
     }
@@ -118,7 +120,7 @@ int main(int argc, char *argv[]) {
     }
     else
     {
-        for ( i = 0; i < strlen(argv[1]); i++ ) //count the number of . and : to check the format of host and port
+        for ( i = 0; i < strlen(argv[1]); i++ ) //search for : to check the format of host and port
         {
             if ( argv[1][i] == ':' )   counter++;
         }
@@ -136,6 +138,7 @@ int main(int argc, char *argv[]) {
         ip = (char*)malloc((iplength+1)*sizeof(char));
 
         strncpy(ip, argv[1], iplength);
+        ip[iplength] = '\0';
     }
 
     c = connectRedis(ip, port, timeout);
@@ -171,7 +174,7 @@ int main(int argc, char *argv[]) {
 
         if ( strcmp(cmd, "get") == 0 ) get(c, cmdLine); // get the key
 
-        if ( strcmp(cmd, "set") == 0 )  set(c, cmdLine, cmd, size); // set the key
+        if ( strcmp(cmd, "set") == 0 )  set(c, cmdLine, cmd); // set the key
 
         if ( strcmp(cmd, "incr") == 0 || strcmp(cmd, "decr") == 0 ) step(c, cmdLine); // increment/decrement the number
 
