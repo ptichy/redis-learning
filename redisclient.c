@@ -6,63 +6,68 @@
 
 #include "hiredis/hiredis.h"
 
-void ping(redisContext *c, redisReply *reply)
+redisContext *connectRedis(char *ip, int port, struct timeval timeout)
 {
+    redisContext *c;
+
+    c = redisConnectWithTimeout(ip, port, timeout);
+    if (c->err)
+    {
+        printf("Connection error: %s\n", c->errstr);
+        exit(1);
+    }
+    return c;
+}
+
+void ping(redisContext *c)
+{
+    redisReply *reply;
+
     reply = redisCommand(c,"PING");
     printf("PING: %s\n", reply->str);
     freeReplyObject(reply);
 }
 
-void get(redisContext *c, char *cmdLine, redisReply *reply)
+void get(redisContext *c, char *cmdLine)
 {
+    redisReply *reply;
     reply = redisCommand(c,cmdLine);
     printf("> %s\n", reply->str);
     freeReplyObject(reply);
 }
 
-void set(redisContext *c, char *cmdLine, redisReply *reply, char *cmd, int size)
+void set(redisContext *c, char *cmdLine, char *cmd, int size)
 {
+    redisReply *reply;
     char *key, *value;
-    int i, temp;
+    int i, pos;
 
-    size = strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine-strlen(cmd);
+    size = strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine-strlen(cmd)-1;
+
     if ( size > 0 )
     {
-        key = (char*)malloc(size*sizeof(char));
-        for ( i = strlen(cmd)+1; i < strchr(cmdLine+strlen(cmd)+1,' ')-cmdLine; i++ ) key[i-(strlen(cmd)+1)] = cmdLine[i];
-        key[i-(strlen(cmd)+1)] = '\0';
-        //printf("key:%s|",key);
-
-        temp = i+1;
-        size = strlen(cmdLine)-(strlen(cmd)+strlen(key)+1);
+        key = strndup(cmdLine+strlen(cmd)+1, size);
+        size = strlen(cmdLine)-(strlen(cmd)+strlen(key)+2);
     }
 
     if ( size > 0 )
     {
-        value = (char*)malloc(size*sizeof(char));
-        //printf("value_size:%d|\n", size);
-        for ( i; i < strlen(cmdLine); i++ ) value[i-temp] = cmdLine[i];
-        value[i-temp] = '\0';
-    }
+        value = malloc((size+1)*sizeof(char));
+        strcpy(value, cmdLine+strlen(cmd)+strlen(key)+2);
 
-    //printf("value:%s|\n", value);
-
-
-    //printf("key:%s|\n", key);
-    if ( size > 0 )
-    {
         reply = redisCommand(c,"SET %s %s", key, value);
         printf("> SET: %s\n", reply->str);
         freeReplyObject(reply);
 
         free(key);
-        //free(value);
+        free(value);
     }
     else printf("> ERR wrong number of arguments for 'set' command\n");
 }
 
-void step(redisContext *c, char *cmdLine, redisReply *reply)
+void step(redisContext *c, char *cmdLine)
 {
+    redisReply *reply;
     int i, counter;
 
     i = 0;
@@ -87,8 +92,9 @@ void step(redisContext *c, char *cmdLine, redisReply *reply)
     freeReplyObject(reply);
 }
 
-void del(redisContext *c, char *cmdLine, redisReply *reply)
+void del(redisContext *c, char *cmdLine)
 {
+    redisReply *reply;
     reply = redisCommand(c,cmdLine);
     printf("> %s\n", reply->str);
     freeReplyObject(reply);
@@ -102,7 +108,6 @@ int main(int argc, char *argv[]) {
     char *cmdLine;
     char *cmd;
     redisContext *c;
-    redisReply *reply;
     struct timeval timeout = { 1, 500000 };
 
     if ( argc != 2 )
@@ -115,10 +120,10 @@ int main(int argc, char *argv[]) {
     {
         for ( i = 0; i < strlen(argv[1]); i++ ) //count the number of . and : to check the format of host and port
         {
-            if ( argv[1][i] == ':' || argv[1][i] == '.' )   counter++;
+            if ( argv[1][i] == ':' )   counter++;
         }
 
-        if ( counter != 4 )
+        if ( counter != 1 )
         {
             printf("error: wrong format (use 127.0.0.1:6379)\n");
             exit(1);
@@ -130,22 +135,12 @@ int main(int argc, char *argv[]) {
         int iplength = strchr(argv[1],':')-argv[1];
         ip = (char*)malloc((iplength+1)*sizeof(char));
 
-        for ( i = 0; i < iplength; i++ )
-        {
-            ip[i] = argv[1][i];
-        }
-        ip[i] = '\0';
+        strncpy(ip, argv[1], iplength);
     }
 
+    c = connectRedis(ip, port, timeout);
 
-    c = redisConnectWithTimeout(ip, port, timeout);
-    if (c->err)
-    {
-        printf("Connection error: %s\n", c->errstr);
-        exit(1);
-    }
-
-    ping(c, reply); // PING server
+    ping(c); // PING server
 
     cmdLine =  (char*)malloc(50*sizeof(char));
 
@@ -161,9 +156,12 @@ int main(int argc, char *argv[]) {
         {
             size = strchr(cmdLine,' ')-cmdLine;
             cmd = (char*)malloc((size+1)*sizeof(char));
-            for ( i = 0; i < size; i++ ) cmd[i] = cmdLine[i];
-            cmd[i] = '\0';
-            for ( i = 0; i < size; i++ ) cmd[i] = tolower(cmd[i]);
+
+            strncpy(cmd, cmdLine, size);
+            cmd[size] = '\0';
+
+            for ( i = 0; i < size; i++ )
+                cmd[i] = tolower(cmd[i]);
         }
         else
         {
@@ -171,18 +169,19 @@ int main(int argc, char *argv[]) {
             strcpy(cmd,cmdLine);
         }
 
-        if ( strcmp(cmd, "get") == 0 ) get(c, cmdLine, reply); // get the key
+        if ( strcmp(cmd, "get") == 0 ) get(c, cmdLine); // get the key
 
-        if ( strcmp(cmd, "set") == 0 )  set(c, cmdLine, reply, cmd, size); // set the key
+        if ( strcmp(cmd, "set") == 0 )  set(c, cmdLine, cmd, size); // set the key
 
-        if ( strcmp(cmd, "incr") == 0 || strcmp(cmd, "decr") == 0 ) step(c, cmdLine, reply); // increment/decrement the number
+        if ( strcmp(cmd, "incr") == 0 || strcmp(cmd, "decr") == 0 ) step(c, cmdLine); // increment/decrement the number
 
-        if ( strcmp(cmd,"del") == 0 )  del(c, cmdLine, reply); // delete a key
+        if ( strcmp(cmd,"del") == 0 )  del(c, cmdLine); // delete a key
 
         free(cmd);
     }
 
     if ( argc == 2 ) free(ip);
     free(cmdLine);
+
     return 0;
 }
