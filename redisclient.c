@@ -33,7 +33,11 @@ void get(redisContext *c, char *key)
     redisReply *reply;
 
     reply = redisCommand(c, "get %s", key);
-    printf("> %s\n", reply->str);
+
+    if ( reply->str != NULL )
+        printf("> %s\n", reply->str);
+    else printf("> ERR key doesn't exist or wrong number of arguments for 'get' command\n");
+
     freeReplyObject(reply);
 }
 
@@ -157,7 +161,7 @@ int main(int argc, char *argv[]) {
             cmd = strndup(cmdLine, strlen(cmdLine));
         }
 
-        if ( strcmp(cmd, "get") == 0 ) get(c, &cmdLine[argPos]); // get the key
+        if ( strcmp(cmd, "get") == 0 ) get(c, &cmdLine[argPos]);  // get the key
 
         if ( strcmp(cmd, "set") == 0 ) set(c, &cmdLine[argPos]); // set the key
 
