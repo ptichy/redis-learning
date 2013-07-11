@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
         if ( strchr(cmdLine,' ') > 0 )
         {
             size = strchr(cmdLine,' ')-cmdLine;
-            cmd = (char*)malloc((size+1)*sizeof(char));
             argPos = size+1;
 
             cmd = strndup(cmdLine, size);
