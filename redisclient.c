@@ -69,11 +69,13 @@ void set(redisContext *c, char *arg)
     else printf("> ERR wrong number of arguments for 'set' command\n");
 }
 
-void step(redisContext *c, char *cmdLine)
+void step(redisContext *c, int way, char *key)
 {
     redisReply *reply;
 
-    reply = redisCommand(c,cmdLine);
+    if ( way == 0 )
+        reply = redisCommand(c, "incr %s", key);
+    else reply = redisCommand(c, "decr %s", key);
 
     if ( (reply->str) == NULL )
     {
@@ -164,7 +166,9 @@ int main(int argc, char *argv[]) {
 
         if ( strcmp(cmd, "set") == 0 ) set(c, &cmdLine[argPos]); // set the key
 
-        if ( strcmp(cmd, "incr") == 0 || strcmp(cmd, "decr") == 0 ) step(c, cmdLine); // increment/decrement the number
+        if ( strcmp(cmd, "incr") == 0 )  step(c, 0, &cmdLine[argPos]);  // increment the number
+
+        if ( strcmp(cmd, "decr") == 0 ) step(c, 1, &cmdLine[argPos]);   // decrement the number
 
         if ( strcmp(cmd,"del") == 0 ) del(c, &cmdLine[argPos]); // delete a key
 
