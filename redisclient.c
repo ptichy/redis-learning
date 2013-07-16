@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <malloc.h>
 
-#include "hiredis.h"
+#include "hiredis/hiredis.h"
 
 typedef void (*arg_func)(redisContext *c, char *key);
 
