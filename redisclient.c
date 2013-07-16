@@ -6,6 +6,14 @@
 
 #include "hiredis.h"
 
+typedef void (*arg_func)(redisContext *c, char *key);
+
+typedef struct argument
+{
+    char *cmd;
+    arg_func func;
+} arg;
+
 redisContext *connectRedis(char *ip, int port, struct timeval timeout)
 {
     redisContext *c;
@@ -63,10 +71,11 @@ void set(redisContext *c, char *arg)
         printf("> SET: %s\n", reply->str);
         freeReplyObject(reply);
 
-        free(key);
         free(value);
     }
     else printf("> ERR wrong number of arguments for 'set' command\n");
+
+    if ( keySize > 0 ) free(key);
 }
 
 void step(redisContext *c, int way, char *key)
@@ -88,6 +97,16 @@ void step(redisContext *c, int way, char *key)
     freeReplyObject(reply);
 }
 
+void incr(redisContext *c, char *key)
+{
+    step(c, 0, key);
+}
+
+void decr(redisContext *c, char *key)
+{
+    step(c, 1, key);
+}
+
 void del(redisContext *c, char *key)
 {
     redisReply *reply;
@@ -96,6 +115,29 @@ void del(redisContext *c, char *key)
     printf("> %s\n", reply->str);
     freeReplyObject(reply);
 }
+
+static arg commands[] = {
+    {
+        .cmd = "get",
+        .func = get
+    },
+    {
+        .cmd = "set",
+        .func = set
+    },
+    {
+        .cmd = "incr",
+        .func = incr
+    },
+    {
+        .cmd = "decr",
+        .func = decr
+    },
+    {
+        .cmd = "del",
+        .func = del
+    }
+};
 
 int main(int argc, char *argv[]) {
     char *ip;
@@ -162,15 +204,9 @@ int main(int argc, char *argv[]) {
             cmd = strndup(cmdLine, strlen(cmdLine));
         }
 
-        if ( strcmp(cmd, "get") == 0 ) get(c, &cmdLine[argPos]);  // get the key
-
-        if ( strcmp(cmd, "set") == 0 ) set(c, &cmdLine[argPos]); // set the key
-
-        if ( strcmp(cmd, "incr") == 0 )  step(c, 0, &cmdLine[argPos]);  // increment the number
-
-        if ( strcmp(cmd, "decr") == 0 ) step(c, 1, &cmdLine[argPos]);   // decrement the number
-
-        if ( strcmp(cmd,"del") == 0 ) del(c, &cmdLine[argPos]); // delete a key
+        for ( i = 0; i < sizeof(commands)/sizeof(arg); i++ )
+            if ( !strcmp(commands[i].cmd, cmd) )
+                commands[i].func(c, &cmdLine[argPos]);
 
         free(cmd);
     }
