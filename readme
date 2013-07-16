@@ -1,5 +1,5 @@
 I made a simple redis client in C based on the hiredis example ( redis-2.6.14/deps/hiredis/example.c ) to demonstrate how to use hiredis.
-You can compile it with cc -o redisclient redisclient.c libhiredis.a command.
+You can compile it with cc -o redisclient redisclient.c libhiredis.a command or run makefile.
 If you want to specify the host from terminal, run ./redisclient 127.0.0.1:6379.
 If you don't define, it will use the adress and port in this example.
 Type exit to quit.
